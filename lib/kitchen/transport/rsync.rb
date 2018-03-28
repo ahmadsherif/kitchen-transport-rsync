@@ -31,6 +31,16 @@ module Kitchen
         @connection_options = options
         @connection = self.class::Connection.new(options, &block)
       end
+      
+      def finalize_config!(instance)
+        super.tap do
+          if defined?(Kitchen::Verifier::Inspec) && instance.verifier.is_a?(Kitchen::Verifier::Inspec)
+            instance.verifier.send(:define_singleton_method, :runner_options_for_rsync) do |config_data|
+              runner_options_for_ssh(config_data)
+            end
+          end
+        end
+      end
 
       class Connection < Ssh::Connection
         def upload(locals, remote)
